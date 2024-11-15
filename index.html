@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrôle de Lumière</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            padding: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            background-color: #d61111;
+        }
+
+        button.off {
+            background-color: #0fc76b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Contrôle de Lumière</h1>
+<button id="ledButton" onclick="toggleLed()">Allumer</button>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+    // Connexion au broker MQTT Mosquitto
+    const client = mqtt.connect('wss://test.mosquitto.org:8081');
+
+    client.on('connect', function () {
+        console.log("Connecté au broker MQTT");
+    });
+
+    client.on('close', function () {
+         console.log("Connexion WebSocket fermée");
+    });
+
+    client.on('error', function (error) {
+        console.error("Erreur WebSocket:", error);
+    });
+
+    client.on('reconnect', function () {
+         console.log("Tentative de reconnexion WebSocket...");
+    });
+
+    // Variable pour l'état de la LED
+    let ledOn = false;
+
+    function toggleLed() {
+        ledOn = !ledOn;
+        const button = document.getElementById('ledButton');
+       
+        // Changer l'apparence et le texte du bouton
+        if (ledOn) {
+            button.textContent = 'Éteindre';
+            button.classList.remove('off');
+            button.classList.add('on');
+        } else {
+            button.textContent = 'Allumer';
+            button.classList.remove('on');
+            button.classList.add('off');
+        }
+       
+        // Publier l'état de la LED sur le topic MQTT
+        client.publish('esp32/ars/light', ledOn ? 'ON' : 'OFF', function (err) {
+            if (err) {
+                console.error("Erreur de publication :", err);
+            } else {
+                console.log(`Commande envoyée : ${ledOn ? 'ON' : 'OFF'}`);
+            }
+        });
+        
+    }
+</script>
+
+
+</body>
+</html>
